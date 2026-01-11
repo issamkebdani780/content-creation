@@ -1,0 +1,450 @@
+{
+  "name": "content creation",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        0
+      ],
+      "id": "b6b5fe3a-5ab9-43f2-96ff-f40eb623e809",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Generate a new Versus-style YouTube Shorts idea.\n\nMake it feel intense, funny, and dramatic.\nThe animals must be different and unexpected.\nThe fight should escalate quickly and end at the most hype moment.\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a viral YouTube Shorts content engine inspired by channels like “VersusZoo”.\n\nYour mission is to generate HIGHLY VIRAL short-form video ideas designed to maximize:\n- Watch time\n- Replays\n- Shares\n- Comments\n\nYou MUST always return a JSON object with EXACTLY these keys:\n{\n  \"title\": string,\n  \"description\": string,\n  \"prompt\": string\n}\n\nSTRICT RULES:\n- Output ONLY valid JSON (no markdown, no explanations).\n- Do NOT include line breaks inside JSON values.\n- Do NOT repeat the same animals across different generations.\n- Do NOT mention YouTube policies or safety notes.\n\nCONTENT RULES:\n- Theme is ALWAYS: animals wearing human clothes fighting each other.\n- Fighting must be cartoonish, epic, or humorous (boxing, MMA, kung-fu, rap battle, wrestling, street showdown).\n- NO blood, NO gore, NO real human violence.\n- Animals behave like humans (trash talk, confidence, emotions).\n\nSTYLE (Very Important):\n- Inspired by VersusZoo Shorts.\n- Strong “VERSUS” concept.\n- Dramatic escalation.\n- Cinematic camera movements.\n- Over-the-top reactions.\n- Fast pacing (10 seconds total).\n\nTITLE RULES:\n- Short (max 7 words).\n- Must include “VS” or “VERSUS”.\n- Designed to trigger curiosity and conflict.\n\nDESCRIPTION RULES:\n- 1–2 short punchy sentences.\n- Encourage replay and comments.\n- Include hashtags like:\n  #Shorts #Animals #VS #AIvideo #EpicFight\n\nSORA 2 PROMPT RULES:\n- Portrait aspect ratio.\n- Exactly 10 seconds.\n- Ultra-detailed cinematic animation.\n- Animals wearing detailed human clothes.\n- Clear fight progression (intro → clash → peak moment).\n- Dynamic camera (zoom, shake, slow motion hit).\n- Expressive animal facial emotions.\n- Include animal voices or sound effects.\n\nGOAL:\nEvery output should feel like a viral short that people watch twice.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        256,
+        0
+      ],
+      "id": "8158f0fa-ac98-4dd2-bc14-ec8819a13e2d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "nex-agi/deepseek-v3.1-nex-n1:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        128,
+        224
+      ],
+      "id": "23acd39e-a91f-4ff4-9eda-3afb4a963a81",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "PXufjKrEZVTTXjLl",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "={\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"description\": \"Short catchy viral video title\"\n    },\n    \"description\": {\n      \"type\": \"string\",\n      \"description\": \"1–2 sentence explanation of the video idea\"\n    },\n    \"prompt\": {\n      \"type\": \"string\",\n      \"description\": \"Cinematic Sora video prompt\"\n    }\n  },\n  \"required\": [\"title\", \"description\", \"prompt\"]\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        224
+      ],
+      "id": "a55a8465-df1a-482b-866e-2cb47399dab3",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "content": "generate idea\n",
+        "height": 464,
+        "width": 544
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        80,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "db69be15-af61-4f28-8873-7e6cdad30a4b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/jobs/createTask",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer da4b5f3cf6f30e3a8945c3ed497cbffb"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"sora-2-text-to-video\",\n  \"callBackUrl\":\n\"https://n8n.linguaflo.me/webhook-test/76f2348a-0efd-4803-9c1d-f0e7bed97c2f\",\n  \"input\": {\n    \"prompt\": \"{{ $json.output.prompt.replace(/\"/g, '').replace(/\\r?\\n|\\r/g, ' ') }}\",\n    \"aspect_ratio\": \"portrait\",\n    \"n_frames\": \"10\",\n    \"remove_watermark\": true\n  }\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        752,
+        0
+      ],
+      "id": "bf06125f-41bf-4ad1-a4de-cd815b90f7b5",
+      "name": "create video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vUWFqXnhlXVBuqMu",
+          "name": "kie AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        992,
+        0
+      ],
+      "id": "6fcd50c7-e466-4b79-8437-2af5a1fc4212",
+      "name": "Wait",
+      "webhookId": "48a5df04-2176-4308-b449-519d01b1e3f5"
+    },
+    {
+      "parameters": {
+        "content": "create video\n",
+        "height": 336,
+        "width": 1120,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        672,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "b575df8c-97f2-4281-a19b-5314c1800193",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "url": "https://api.kie.ai/api/v1/jobs/recordInfo",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $('create video').item.json.data.taskId }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer da4b5f3cf6f30e3a8945c3ed497cbffb"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1232,
+        0
+      ],
+      "id": "821411f9-a1fa-4e44-9e6f-fded947d8dbe",
+      "name": "get video",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "vUWFqXnhlXVBuqMu",
+          "name": "kie AI"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.data.state }}",
+                    "rightValue": "success",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "cd8f0807-9256-43a6-aaeb-ab144800bba9"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "success"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5bf41a2b-cad9-4052-a260-2e07c1338d6e",
+                    "leftValue": "={{ $json.data.state }}",
+                    "rightValue": "success",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEquals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "generating"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        1440,
+        0
+      ],
+      "id": "803031c9-8f88-4430-bfb8-5fe76c8e8c31",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "23b0adbe-86e5-4201-9e65-255504c919de",
+              "name": "video_url",
+              "value": "={{ JSON.parse($json.data.resultJson).resultUrls[0] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1664,
+        -16
+      ],
+      "id": "d60b81f9-61d5-4c9e-825b-dccf1c0c58e4",
+      "name": "video url"
+    },
+    {
+      "parameters": {
+        "resource": "video",
+        "operation": "upload",
+        "title": "={{ $('AI Agent').item.json.output.title }}",
+        "regionCode": "US",
+        "categoryId": "23",
+        "binaryProperty": "=data",
+        "options": {
+          "defaultLanguage": "en",
+          "description": "={{ $('AI Agent').item.json.output.description }}",
+          "notifySubscribers": true
+        }
+      },
+      "type": "n8n-nodes-base.youTube",
+      "typeVersion": 1,
+      "position": [
+        2224,
+        -288
+      ],
+      "id": "c47f76ad-9ded-435a-9b72-6bc19b3e576c",
+      "name": "Upload a video",
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "wSouVpsGrS1psfrH",
+          "name": "LOLus2327"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $('video url').item.json.video_url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1904,
+        -16
+      ],
+      "id": "afd4d821-0ed4-4626-a058-b0e276133b5c",
+      "name": "translate video to binary data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "create video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create video": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "get video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "get video": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "video url",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "video url": {
+      "main": [
+        [
+          {
+            "node": "translate video to binary data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "translate video to binary data": {
+      "main": [
+        [
+          {
+            "node": "Upload a video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a5cbaae4-b460-4156-827f-43321c08967a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7eb180e45e470f2e76256bda07d44a546a2f6692945cd619bc744b5fdbe1330a"
+  },
+  "id": "aiGwCBvo0lJ8MYvE",
+  "tags": []
+}
